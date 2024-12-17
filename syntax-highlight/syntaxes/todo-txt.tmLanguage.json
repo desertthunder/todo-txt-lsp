@@ -1,0 +1,159 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "todo-txt",
+	"scopeName": "source.todo.txt",
+	"fileTypes": [
+		".txt"
+	],
+	"patterns": [
+		{
+			"include": "#completed-task"
+		},
+		{
+			"include": "#incomplete-task"
+		}
+	],
+	"repository": {
+		"completed-task": {
+			"patterns": [
+				{
+					"include": "#task-status"
+				},
+				{
+					"include": "#task-priority"
+				},
+				{
+					"include": "#two-dates"
+				},
+				{
+					"include": "#single-date"
+				},
+				{
+					"include": "#task-description"
+				},
+				{
+					"include": "#task-context"
+				},
+				{
+					"include": "#task-project"
+				},
+				{
+					"include": "#task-tags"
+				}
+			]
+		},
+		"incomplete-task": {
+			"patterns": [
+				{
+					"include": "#task-status"
+				},
+				{
+					"include": "#task-priority"
+				},
+				{
+					"include": "#two-dates"
+				},
+				{
+					"include": "#single-date"
+				},
+				{
+					"include": "#task-description"
+				},
+				{
+					"include": "#task-context"
+				},
+				{
+					"include": "#task-project"
+				},
+				{
+					"include": "#task-tags"
+				}
+			]
+		},
+		"task-status": {
+			"patterns": [
+				{
+					"name": "constant.character",
+					"match": "\\[x\\]"
+				}
+			]
+		},
+		"task-priority": {
+			"patterns": [
+				{
+					"name": "constant.character.escape",
+					"match": "\\((A|B|C|a|b|c|high|medium|low|High|Medium|Low)\\)"
+				}
+			]
+		},
+		"task-description": {
+			"patterns": [
+				{
+					"name": "string.quoted.double",
+					"match": "\"[^\"]*\""
+				}
+			]
+		},
+		"task-context": {
+			"patterns": [
+				{
+					"name": "string.quoted.double",
+					"match": "@\\w+"
+				}
+			]
+		},
+		"task-project": {
+			"patterns": [
+				{
+					"name": "keyword.operator",
+					"match": "\\+\\w+"
+				}
+			]
+		},
+		"task-tags": {
+			"patterns": [
+				{
+					"name": "meta.data.key-value.todo",
+					"match": "\\b(\\w+):(\\S+)\\b",
+					"captures": {
+						"1": {
+							"name": "variable.parameter"
+						},
+						"2": {
+							"name": "string.unquoted"
+						}
+					}
+				}
+			]
+		},
+		"two-dates": {
+			"patterns": [
+				{
+					"name": "constant.numeric.date.todo",
+					"match": "(?<!\\S)(\\d{4}-\\d{2}-\\d{2})\\s+(\\d{4}-\\d{2}-\\d{2})(?!\\s+\\d{4}-\\d{2}-\\d{2})",
+					"captures": {
+						"0": {
+							"name": "comment.block.documentation"
+						},
+						"1": {
+							"name": "keyword.other.unit"
+						}
+					}
+				}
+			]
+		},
+		"single-date": {
+			"patterns": [
+				{
+					"name": "constant.numeric.date.todo",
+					"match": "(?<!\\S)(\\d{4}-\\d{2}-\\d{2})(?!\\s+\\d{4}-\\d{2}-\\d{2})",
+					"captures": {
+						"0": {
+							"name": "keyword.other.unit"
+						}
+					}
+				}
+			]
+		}
+	}
+}

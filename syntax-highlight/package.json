@@ -1,0 +1,35 @@
+{
+  "name": "todo-txt-syntax",
+  "displayName": "todo.txt Syntax Highlighting",
+  "description": "Syntax highlighting for todo.txt files and statements.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "todo-txt",
+        "aliases": [
+          "todo.txt",
+          "todo-txt",
+          "todo"
+        ],
+        "extensions": [
+          ".txt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "todo-txt",
+        "scopeName": "source.todo.txt",
+        "path": "./syntaxes/todo-txt.tmLanguage.json"
+      }
+    ]
+  }
+}
