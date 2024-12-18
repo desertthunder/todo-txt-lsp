@@ -1,0 +1,26 @@
+{
+    "configuration": {
+        "type": "object",
+        "title": "Example configuration",
+        "properties": {
+            "languageServerExample.maxNumberOfProblems": {
+                "scope": "resource",
+                "type": "number",
+                "default": 100,
+                "description": "Controls the maximum number of problems produced by the server."
+            }
+        }
+    },
+    "engines": {
+        "vscode": "^1.52.0"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.2",
+        "@types/vscode": "^1.96.0",
+        "typescript": "^5.7.2",
+        "vscode-test": "^1.6.1"
+    }
+}

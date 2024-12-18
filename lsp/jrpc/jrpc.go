@@ -10,10 +10,12 @@ import (
 	"strconv"
 
 	"github.com/charmbracelet/log"
+	"github.com/desertthunder/todo_txt_lsp/libs"
 )
 
 type Params struct{}
 
+var logger = libs.CreateLogger("jrpc")
 var Separator = []byte{'\r', '\n', '\r', '\n'}
 var SepNotFound = errors.New("carriage returns not found in message")
 

@@ -17,7 +17,7 @@ import (
 var logger *log.Logger
 
 func init() {
-	logger = libs.CreateLogger()
+	logger = libs.CreateLogger("scanner")
 }
 
 func main() {
@@ -28,8 +28,6 @@ func main() {
 
 	for s.Scan() {
 		b := s.Bytes()
-
 		logger.Info("Received message:", string(b))
-
 	}
 }
