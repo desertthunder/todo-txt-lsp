@@ -1,4 +1,4 @@
-package server
+package lsp
 
 import "encoding/json"
 

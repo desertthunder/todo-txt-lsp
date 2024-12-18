@@ -1,4 +1,4 @@
-package server
+package lsp
 
 const docSyncDidOpen Method = "textDocument/didOpen"
 

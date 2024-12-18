@@ -35,3 +35,5 @@ todo.txt files.
 The `lsp` package is a golang implementation of the language server protocol for
 todo.txt files. It is reliant on only a single external dependency, `charmbracelet/log`,
 but otherwise builds parsing and request-response handling from the standard library.
+
+## Proposed Features

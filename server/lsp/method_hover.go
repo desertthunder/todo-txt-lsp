@@ -1,4 +1,4 @@
-package server
+package lsp
 
 const HoverFeature Method = "textDocument/hover"
 

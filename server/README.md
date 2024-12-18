@@ -2,6 +2,12 @@
 
 The lsp package for todo.txt language support.
 
+## Server Package
+
+Files prefixed with method contain types.
+
+Files prefixed with sync or feature contain request/response handlers.
+
 ## Notes
 
 ### Lifecycle

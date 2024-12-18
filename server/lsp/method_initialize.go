@@ -1,4 +1,4 @@
-package server
+package lsp
 
 type ClientInfo struct {
 	Name string `json:"name"`

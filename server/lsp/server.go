@@ -1,5 +1,5 @@
-// package server
-package server
+// package lsp
+package lsp
 
 import (
 	"fmt"
