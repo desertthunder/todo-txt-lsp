@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Todo.txt Syntax Extension",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Debug LSP Extension",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+      "outFiles": ["${workspaceRoot}/client/out/**/*.js"],
+      "autoAttachChildProcesses": true
+    }
+  ]
+}
