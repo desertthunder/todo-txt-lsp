@@ -9,15 +9,16 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-var logger *log.Logger
+var logger = CreateLogger()
 
 func CreateLogDir() error {
 	return os.Mkdir("logs", 0755)
 }
 
 // CreateLogFile creates a file with the format:
-// Name Format: {context}_{year}-{month}-{day}-{hour}-{minute}-{second}_lsp.log
-func CreateLogFile(context string) *os.File {
+// Name Format: lsp_{year}-{month}-{day}-{hour}-{minute}-{second}.log
+// if args are not provided
+func CreateLogFile() *os.File {
 	var f *os.File
 	var err error
 
@@ -25,7 +26,7 @@ func CreateLogFile(context string) *os.File {
 		d := time.Now()
 		fdate := d.Format(time.DateOnly)
 		ftime := fmt.Sprintf("%02d:%02d:%02d", d.Hour(), d.Minute(), d.Second())
-		fname := fmt.Sprintf("%s_%s_%s.log", context, fdate, ftime)
+		fname := fmt.Sprintf("lsp_%s_%s.log", fdate, ftime)
 		f, err = os.CreateTemp("", fname)
 	} else {
 		fname := os.Args[2]
@@ -40,9 +41,8 @@ func CreateLogFile(context string) *os.File {
 	return f
 }
 
-// CreateLogger creates a file logger
-func CreateLogger(ctx string) *log.Logger {
-	f := CreateLogFile(ctx)
+func CreateLogger() *log.Logger {
+	f := CreateLogFile()
 
 	if f == nil {
 		return log.Default()
@@ -50,13 +50,13 @@ func CreateLogger(ctx string) *log.Logger {
 
 	return log.NewWithOptions(f, log.Options{
 		Level:           log.DebugLevel,
+		TimeFormat:      time.DateTime,
 		Prefix:          "[lsp 🚀]",
-		TimeFormat:      time.RFC3339,
 		ReportTimestamp: true,
 		ReportCaller:    true,
 	})
 }
 
 func GetLogger() *log.Logger {
-	return CreateLogger("")
+	return logger
 }

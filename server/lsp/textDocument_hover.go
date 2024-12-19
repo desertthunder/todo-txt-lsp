@@ -2,6 +2,13 @@ package lsp
 
 import "encoding/json"
 
+type MarkupKind string
+
+const (
+	markdown  MarkupKind = "markdown"
+	plaintext MarkupKind = "plaintext"
+)
+
 type TextDocumentIdentifier struct {
 	Uri string `json:"uri"`
 }
@@ -26,13 +33,6 @@ type Range struct {
 	End   RangePos `json:"end"`
 }
 
-type MarkupKind string
-
-const (
-	markdown  MarkupKind = "markdown"
-	plaintext MarkupKind = "plaintext"
-)
-
 type HoverParams struct {
 	TextDocumentPositionParams
 }
@@ -56,9 +56,13 @@ type HoverResultWithRange struct {
 	Range Range `json:"range"`
 }
 
+type HoverResponse struct {
+	Response
+	Result HoverResult `json:"result"`
+}
+
 func HandleHoverMessage(data []byte) (*HoverParams, error) {
 	params := HoverParams{}
-
 	if err := json.Unmarshal(data, &params); err != nil {
 		return nil, err
 	}
@@ -66,14 +70,16 @@ func HandleHoverMessage(data []byte) (*HoverParams, error) {
 	return &params, nil
 }
 
-func CreateHoverResult(params HoverParams) (*HoverResult, error) {
-	r := HoverResult{
+func CreateHoverResult(params HoverParams) HoverResult {
+	return HoverResult{
 		MarkupContent{markdown,
 			`# Hello World
 
 			This is likely where I'll import documentation from markdown files.
 			`,
 		}}
+}
 
-	return &r, nil
+func CreateHoverResponse(id *int, result HoverResult) HoverResponse {
+	return HoverResponse{BaseResponse(id), result}
 }

@@ -5,12 +5,14 @@ type Method string
 const (
 	NotImplementedMethod Method = ""
 	InitializeMethod     Method = "initialize"
+	Initialized          Method = "initialized"
 	HoverMethod          Method = "textDocument/hover"
 )
 
 func GetMethod(m string) Method {
 	methods := []Method{
-		"initialize",
+		InitializeMethod,
+		HoverMethod,
 	}
 
 	for _, method := range methods {

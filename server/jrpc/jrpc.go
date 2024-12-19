@@ -36,7 +36,6 @@ type Message struct {
 	JSONRPC string `json:"jsonrpc"`
 	ID      int    `json:"id"`
 	Method  string `json:"method"`
-	Params  Params `json:"params"`
 }
 
 func EncodeMessage(m interface{}) (string, error) {
@@ -47,34 +46,38 @@ func EncodeMessage(m interface{}) (string, error) {
 
 	msg := fmt.Sprintf("Content-Length: %d\r\n\r\n%s", len(content), content)
 
+	logger.Debugf("message to client: %s", msg)
+
 	return msg, nil
 }
 
 // DecodeMessage takes the input stream and decodes the message
 // by cutting the Content-Length & carriage returns, then
 // deserializing the json.
-func DecodeMessage(r *bufio.Reader, c int) (Message, error) {
-	m := Message{}
-	payload := make([]byte, c)
+func DecodeMessage(r *bufio.Reader, m *RawMessage) (Message, error) {
+	msg := Message{}
+	payload := make([]byte, m.ContentLength)
 
 	if _, err := io.ReadFull(r, payload); err != nil {
-		return m, fmt.Errorf("error reading payload: %v", err)
+		return msg, fmt.Errorf("error reading payload: %v", err)
 	}
 
-	logger.Debugf("full message: %s", string(payload))
+	m.Payload = payload
 
-	if err := json.Unmarshal(payload, &m); err != nil {
-		return m, err
+	if err := json.Unmarshal(payload, &msg); err != nil {
+		logger.Errorf("error unmarshalling payload: %s", err.Error())
+		return msg, err
 	}
 
-	logger.Infof("Received message %d: %s", m.ID, m.Method)
+	logger.Infof("Received message id: %d, %s", msg.ID, msg.Method)
 
-	return m, nil
+	return msg, nil
 }
 
 type RawMessage struct {
-	ContentLength []byte
-	Payload       []byte
+	ContentLengthHeader []byte
+	Payload             []byte
+	ContentLength       int
 }
 
 func ReadMessage(r *bufio.Reader, d string) (*RawMessage, error) {
@@ -85,8 +88,8 @@ func ReadMessage(r *bufio.Reader, d string) (*RawMessage, error) {
 
 	for {
 		b, err := r.ReadByte()
-
 		if err != nil {
+			logger.Errorf("error reading buffer: %v", err.Error())
 			return &RawMessage{}, err
 		}
 
@@ -94,29 +97,46 @@ func ReadMessage(r *bufio.Reader, d string) (*RawMessage, error) {
 
 		if buf.Len() >= len(delim) && bytes.HasSuffix(buf.Bytes(), delim) {
 			data := buf.Bytes()[:buf.Len()-len(delim)]
-			remaining := buf.Bytes()[buf.Len()-len(delim):]
+			m.ContentLengthHeader = data
 
-			m.ContentLength = data
-			m.Payload = remaining
+			if err := m.ParseContentLength(); err != nil {
+				logger.Fatalf("invalid Content-Length: %v", err)
+			}
 
 			return &m, nil
 		}
 	}
 }
 
-func (m RawMessage) ParseContentLength() (int, error) {
-	parts := strings.SplitN(string(m.ContentLength), ":", 2)
+func (m *RawMessage) ParseContentLength() error {
+	var err error
+	parts := strings.SplitN(string(m.ContentLengthHeader), ":", 2)
 
 	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid header line: %s", m.ContentLength)
+		m.ContentLength = 0
+		return fmt.Errorf("invalid header line: %s with parts: %d", m.ContentLengthHeader, len(parts))
 	}
 
 	key := strings.TrimSpace(parts[0])
 	value := strings.TrimSpace(parts[1])
 
 	if key != "Content-Length" {
-		return 0, errors.New("invalid key:value pair")
+		m.ContentLength = 0
+		return errors.New("invalid key:value pair")
 	}
 
-	return strconv.Atoi(value)
+	m.ContentLength, err = strconv.Atoi(value)
+	return err
+}
+
+func WriteResponse(w io.Writer, resp string) error {
+	logger.Debug("writing response")
+
+	_, err := w.Write([]byte(resp))
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
+	return nil
 }

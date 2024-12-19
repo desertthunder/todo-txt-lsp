@@ -1,6 +1,10 @@
 package lsp
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/desertthunder/todo_txt_lsp/jrpc"
+)
 
 type ClientInfo struct {
 	Name string `json:"name"`
@@ -40,7 +44,7 @@ const (
 
 type InitializeParams struct {
 	// Parent process ID (nullable)
-	ProcessID int `json:"processId"`
+	// ProcessID int `json:"processId"`
 	// Client metadata
 	// Optional
 	ClientInfo ClientInfo `json:"clientInfo"`
@@ -50,16 +54,16 @@ type InitializeParams struct {
 	RootURI string `json:"rootUri"`
 	// Initialization options from user
 	// Optional
-	InitializationOptions interface{} `json:"initializationOptions"`
+	// InitializationOptions interface{} `json:"initializationOptions"`
 	// The capabilities provided by the client (editor or tool)
 	// See ClientCapabilities in spec
-	Capabilities ClientCapabilities `json:"capabilities"`
+	// Capabilities ClientCapabilities `json:"capabilities"`
 	// If omitted, this value should be set to 'off'.
 	// Optional
-	Trace TraceValue `json:"trace"`
+	// Trace TraceValue `json:"trace"`
 	// Can be null if the client does not support workspace folders
 	// or none are configured.
-	WorkspaceFolders []WorkspaceFolder `json:"workspaceFolders"`
+	// WorkspaceFolders []WorkspaceFolder `json:"workspaceFolders"`
 }
 
 // TODO: See WorkspaceEditClientCapabilities in spec
@@ -169,19 +173,23 @@ type Response struct {
 	ID      *int   `json:"id"`
 }
 
+func BaseResponse(id *int) Response {
+	return Response{"2.0", id}
+}
+
 type ServerCapabilities struct {
 	PositionEncoding                 PositionEncodingKind    `json:"positionEncoding,omitempty"`
-	TextDocumentSync                 TextDocumentSyncOptions `json:"textDocumentSync"`
-	CompletionProvider               CompletionOptions       `json:"completionProvider"`
-	SignatureHelpProvider            SignatureHelpOptions    `json:"signatureHelpProvider"`
-	DocumentFormattingProvider       bool                    `json:"documentFormattingProvider"`
-	DocumentRangeFormattingProvider  bool                    `json:"documentRangeFormattingProvider"`
-	DocumentOnTypeFormattingProvider bool                    `json:"documentOnTypeFormattingProvider"`
-	DeclarationProvider              bool                    `json:"declarationProvider"`
-	RenameProvider                   bool                    `json:"renameProvider"`
-	FoldingRangeProvider             bool                    `json:"foldingRangeProvider"`
-	InlineValueProvider              bool                    `json:"inlineValueProvider"`
-	HoverProvider                    bool                    `json:"hoverProvider"`
+	TextDocumentSync                 TextDocumentSyncOptions `json:"textDocumentSync,omitempty"`
+	CompletionProvider               CompletionOptions       `json:"completionProvider,omitempty"`
+	SignatureHelpProvider            SignatureHelpOptions    `json:"signatureHelpProvider,omitempty"`
+	DocumentFormattingProvider       bool                    `json:"documentFormattingProvider,omitempty"`
+	DocumentRangeFormattingProvider  bool                    `json:"documentRangeFormattingProvider,omitempty"`
+	DocumentOnTypeFormattingProvider bool                    `json:"documentOnTypeFormattingProvider,omitempty"`
+	DeclarationProvider              bool                    `json:"declarationProvider,omitempty"`
+	RenameProvider                   bool                    `json:"renameProvider,omitempty"`
+	FoldingRangeProvider             bool                    `json:"foldingRangeProvider,omitempty"`
+	InlineValueProvider              bool                    `json:"inlineValueProvider,omitempty"`
+	HoverProvider                    bool                    `json:"hoverProvider,omitempty"`
 }
 
 type InitializeResult struct {
@@ -194,46 +202,59 @@ type InitializeResponse struct {
 	Result InitializeResult `json:"result"`
 }
 
+type InitializeRequestMessage struct {
+	jrpc.Message
+	Params InitializeParams `json:"params"`
+}
+
 // HandleInitializeMessage deserializes the message with method "initialize"
 func HandleInitializeMessage(data []byte) (*InitializeParams, error) {
-	params := InitializeParams{}
+	logger.Infof("initialize request: %s", string(data))
+	msg := InitializeRequestMessage{}
 
-	if err := json.Unmarshal(data, &params); err != nil {
+	if err := json.Unmarshal(data, &msg); err != nil {
+		logger.Errorf("error unmarshalling initialize message: %v", err.Error())
 		return nil, err
 	}
 
-	return &params, nil
+	return &msg.Params, nil
 }
 
 // CreateInitializeResult returns a struct containing reported
 // server capabilities to the client.
-func CreateInitializeResult(id *int) InitializeResponse {
-	return InitializeResponse{
-		Response: Response{JSONRPC: "2.0", ID: id},
-		Result: InitializeResult{
-			Capabilities: ServerCapabilities{
-				HoverProvider: true,
-				CompletionProvider: CompletionOptions{
-					ResolveProvider: true,
-					TriggerCharacters: []string{
-						"(", "[", "-",
-					},
-					AllCommitCharacters: []string{
-						")", "]", "_", "x",
-					},
-					CompletionItem: CompletionItem{
-						LabelDetailsSupport: true,
-					},
+func CreateInitializeResult() InitializeResult {
+	logger.Info("initialize result")
+	return InitializeResult{
+		Capabilities: ServerCapabilities{
+			HoverProvider: true,
+			CompletionProvider: CompletionOptions{
+				ResolveProvider: true,
+				TriggerCharacters: []string{
+					"(", "[", "-",
 				},
-				TextDocumentSync: TextDocumentSyncOptions{
-					OpenClose: true,
-					Change:    IncrementalSync,
+				AllCommitCharacters: []string{
+					")", "]", "_", "x",
+				},
+				CompletionItem: CompletionItem{
+					LabelDetailsSupport: true,
 				},
 			},
-			ServerInfo: ServerInfo{
-				Name:    "todo-txt-lsp",
-				Version: "0.1.0",
+			TextDocumentSync: TextDocumentSyncOptions{
+				OpenClose: true,
+				Change:    IncrementalSync,
 			},
 		},
+		ServerInfo: ServerInfo{
+			Name:    "todo-txt-lsp",
+			Version: "0.1.0",
+		},
+	}
+}
+
+func CreateInitializeResponse(id *int, res InitializeResult) InitializeResponse {
+	logger.Info("initialize response")
+	return InitializeResponse{
+		Response: Response{JSONRPC: "2.0", ID: id},
+		Result:   res,
 	}
 }

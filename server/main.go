@@ -19,17 +19,32 @@ import (
 
 	"github.com/desertthunder/todo_txt_lsp/jrpc"
 	"github.com/desertthunder/todo_txt_lsp/libs"
+	"github.com/desertthunder/todo_txt_lsp/lsp"
 )
 
 var logger = libs.GetLogger()
 
+type State struct {
+	RecInitialize  bool
+	RecInitialized bool
+}
+
+func (s State) Empty() bool {
+	return !s.RecInitialize && !s.RecInitialized
+}
+
+func NewStateMachine() State {
+	return State{RecInitialized: false}
+}
+
 func main() {
-	// writer := os.Stdout
+	state := NewStateMachine()
+	writer := os.Stdout
 	reader := bufio.NewReader(os.Stdin)
 	logger.Infof("Starting Server (%s)...", time.Now().Format(time.Kitchen))
 
 	for {
-		rawMsg, err := jrpc.ReadMessage(reader, "\r\n\r\n")
+		m, err := jrpc.ReadMessage(reader, "\r\n\r\n")
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -38,21 +53,47 @@ func main() {
 			logger.Fatalf("error reading message: %v", err)
 		}
 
-		contentLength, err := rawMsg.ParseContentLength()
+		logger.Infof("received payload of len %d", m.ContentLength)
+
+		msg, err := jrpc.DecodeMessage(reader, m)
 		if err != nil {
-			logger.Fatalf("Invalid Content-Length: %v", err)
+			logger.Errorf("error decoding message: %v", err)
+			continue
 		}
 
-		logger.Infof("received payload of len %d", contentLength)
-
-		// TODO: use the message struct
-		_, err = jrpc.DecodeMessage(reader, contentLength)
-
-		if err != nil {
-			logger.Printf("error handling message: %v", err)
+		if msg.Method == string(lsp.InitializeMethod) {
+			state.RecInitialize = true
 		}
 
+		if state.RecInitialize && msg.Method == string(lsp.Initialized) {
+			logger.Infof("transport opened 🎉")
+			state.RecInitialized = true
+			continue
+		}
+
+		if state.Empty() {
+			logger.Error("initialized notification not received from client.")
+			os.Exit(1)
+		}
+
+		r, err := lsp.HandleMessage(msg, m.Payload)
+		if err != nil {
+			logger.Errorf("error handling message (%s): %v", string(m.Payload), err.Error())
+			continue
+		}
+
+		resp, err := jrpc.EncodeMessage(r)
+		logger.Debugf("encoded msg: %s", resp)
+		if err != nil {
+			logger.Errorf("error encoding message: %v", err.Error())
+			continue
+		}
+
+		if err = jrpc.WriteResponse(writer, resp); err != nil {
+			logger.Errorf("unable to write response %v", err.Error())
+		}
 	}
 
+	logger.Info("reached end of file")
 	os.Exit(0)
 }

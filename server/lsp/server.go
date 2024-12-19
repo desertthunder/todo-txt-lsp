@@ -2,23 +2,12 @@ package lsp
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/desertthunder/todo_txt_lsp/jrpc"
 	"github.com/desertthunder/todo_txt_lsp/libs"
 )
 
 var logger = libs.GetLogger()
-
-func WriteResponse(w io.Writer, resp string) error {
-	_, err := w.Write([]byte(resp))
-
-	if err != nil {
-		logger.Error(err.Error())
-		return err
-	}
-	return nil
-}
 
 // HandleMessage handles a JSON-RPC message
 //
@@ -28,44 +17,33 @@ func WriteResponse(w io.Writer, resp string) error {
 //     This Handler creates a response (a Result object/struct)
 //
 //  3. This method serializes the response to JSON and calls writes to stdout
-func HandleMessage(msg jrpc.Message, content []byte, w io.Writer) error {
-	var resp string
+func HandleMessage(msg jrpc.Message, content []byte) (interface{}, error) {
 	var err error
 
 	switch GetMethod(msg.Method) {
 	case InitializeMethod:
-		logger.Info("handling initialize message")
-
 		_, err = HandleInitializeMessage(content)
-
 		if err != nil {
-			logger.Error(err.Error())
-			return err
+			logger.Errorf("error handling initialize request message: %v", err.Error())
+			break
 		}
 
-		r := CreateInitializeResult(&msg.ID)
-		resp, err = jrpc.EncodeMessage(r)
-		break
+		r := CreateInitializeResult()
+		res := CreateInitializeResponse(&msg.ID, r)
+		return res, nil
 	case HoverMethod:
-		var p *HoverParams
-		var r *HoverResult
-		p, err = HandleHoverMessage(content)
+		p, err := HandleHoverMessage(content)
 		if err != nil {
-			return err
+			logger.Errorf("error handling hover request message: %v", err.Error())
+			break
 		}
 
-		r, err = CreateHoverResult(*p)
-		resp, err = jrpc.EncodeMessage(r)
-		break
-	case DidSaveTextDocument:
-		err = fmt.Errorf("did save text doc")
+		r := CreateHoverResult(*p)
+		res := CreateHoverResponse(&msg.ID, r)
+		return res, nil
 	default:
 		err = fmt.Errorf("method %s not implemented", msg.Method)
 	}
 
-	if err != nil {
-		return err
-	}
-
-	return WriteResponse(w, resp)
+	return nil, err
 }
