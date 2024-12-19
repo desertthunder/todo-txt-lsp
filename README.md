@@ -47,3 +47,22 @@ but otherwise builds parsing and request-response handling from the standard lib
 6. Rename symbols (projects, contexts, keys)
 7. Warnings for out of order (date)
 8. Filtered views
+
+## Server
+
+The server package for todo.txt language support.
+
+### LSP Package
+
+Files prefixed with method contain types.
+
+Files prefixed with sync or feature contain request/response handlers.
+
+### Debugging
+
+```bash
+go build && go install && asdf reshim && pnpm compile
+
+# After starting the debugger
+tail -f $(echo "console.log(require('os').tmpdir())" | node)/lsp.log
+```
