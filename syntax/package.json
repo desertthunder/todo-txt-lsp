@@ -28,7 +28,7 @@
       {
         "language": "todo-txt",
         "scopeName": "source.todo.txt",
-        "path": "./syntaxes/todo-txt.tmLanguage.json"
+        "path": "./src/todo-txt.tmLanguage.json"
       }
     ]
   }

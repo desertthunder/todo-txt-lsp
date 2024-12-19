@@ -1,4 +1,6 @@
 // package libs contains helpers and utilities
+//
+// global logger
 package libs
 
 import (
