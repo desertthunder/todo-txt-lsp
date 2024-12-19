@@ -1,26 +1,27 @@
 {
-    "configuration": {
-        "type": "object",
-        "title": "Example configuration",
-        "properties": {
-            "languageServerExample.maxNumberOfProblems": {
-                "scope": "resource",
-                "type": "number",
-                "default": 100,
-                "description": "Controls the maximum number of problems produced by the server."
-            }
-        }
+    "name": "todo-txt-lsp",
+    "displayName": "Todo.txt LSP",
+    "version": "0.1.0",
+    "description": "Language server for todo.txt files.",
+    "main": "./client/out/extension",
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -b",
+        "watch": "npm run preflight && tsc -b -w"
     },
     "engines": {
-        "vscode": "^1.52.0"
+        "vscode": "^1.75.0"
     },
+    "activationEvents": [
+        "onLanguage:plaintext"
+    ],
     "dependencies": {
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
         "@types/node": "^22.10.2",
         "@types/vscode": "^1.96.0",
-        "typescript": "^5.7.2",
-        "vscode-test": "^1.6.1"
+        "@vscode/test-electron": "^1.6.2",
+        "typescript": "^5.7.2"
     }
 }

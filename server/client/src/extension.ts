@@ -7,7 +7,9 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
+import { tmpdir } from "os";
 
+const log = "lsp.log";
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
@@ -16,22 +18,17 @@ export function activate(context: ExtensionContext) {
     path.join("tmp", "bin", "todo_txt_lsp")
   );
 
-  const debugOptions = { execArgv: [] };
-
-  const serverOptions: ServerOptions = {
-    run: { module: serverModule, transport: TransportKind.stdio },
+  const serverOptions = {
+    run: { command: "todo_txt_lsp", transport: TransportKind.stdio },
     debug: {
-      module: serverModule,
+      command: "todo_txt_lsp",
       transport: TransportKind.stdio,
-      options: debugOptions,
+      args: ["--file", `${tmpdir}/${log}`],
     },
-  };
+  } as ServerOptions;
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ scheme: "file", language: "todo-txt" }],
-    synchronize: {
-      fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
-    },
+    documentSelector: [{ scheme: "file", language: "plaintext" }],
   };
 
   client = new LanguageClient(

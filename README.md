@@ -20,8 +20,8 @@ todo.txt files.
 |   └── examples
 |   └── syntaxes
 |       └── todo-txt.tmLanguage.json
-└── lsp
-|   └── server
+└── server
+|   └── lsp
 |   └── jrpc
 └── (treesitter)
 └── (zed-lang)
@@ -37,3 +37,13 @@ todo.txt files. It is reliant on only a single external dependency, `charmbracel
 but otherwise builds parsing and request-response handling from the standard library.
 
 ## Proposed Features
+
+1. Inlay hints/Intellisense
+   Hover
+2. Project awareness
+3. Context awareness
+4. Go To Definition (first instance of a project, or key)
+5. Folding by date
+6. Rename symbols (projects, contexts, keys)
+7. Warnings for out of order (date)
+8. Filtered views

@@ -40,3 +40,4 @@ go.work.sum
 node_modules
 tmp
 logs
+out/

@@ -8,10 +8,10 @@ help:
 	@echo "	help  -	display this help message"
 
 build:
-	@cd lsp; \
+	@cd server; \
 		mkdir -p ./tmp/bin; \
-		echo "building & compiling language server..."
-		go build -o ./tmp/bin ./...; \
+		echo "building & compiling language server..."; \
+		go build -o ./tmp/bin ./... ; \
 		echo "built lsp to ./tmp/bin"; \
 		echo "binary path: ./tmp/bin/$$(ls ./tmp/bin/)"
 

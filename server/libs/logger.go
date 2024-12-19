@@ -4,11 +4,12 @@ package libs
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/log"
 )
+
+var logger *log.Logger
 
 func CreateLogDir() error {
 	return os.Mkdir("logs", 0755)
@@ -17,25 +18,22 @@ func CreateLogDir() error {
 // CreateLogFile creates a file with the format:
 // Name Format: {context}_{year}-{month}-{day}-{hour}-{minute}-{second}_lsp.log
 func CreateLogFile(context string) *os.File {
-	err := CreateLogDir()
+	var f *os.File
+	var err error
 
-	logger := log.Default()
-
-	if err != nil && !strings.Contains(err.Error(), "file exists") {
-		logger.Errorf("error creating logs directory: %v", err)
-		return nil
+	if len(os.Args) < 3 {
+		d := time.Now()
+		fdate := d.Format(time.DateOnly)
+		ftime := fmt.Sprintf("%02d:%02d:%02d", d.Hour(), d.Minute(), d.Second())
+		fname := fmt.Sprintf("%s_%s_%s.log", context, fdate, ftime)
+		f, err = os.CreateTemp("", fname)
+	} else {
+		fname := os.Args[2]
+		f, err = os.Create(fname)
 	}
 
-	d := time.Now()
-	fdate := d.Format(time.DateOnly)
-	ftime := fmt.Sprintf("%02d:%02d:%02d", d.Hour(), d.Minute(), d.Second())
-	fname := fmt.Sprintf("%s_%s_%s.log", context, fdate, ftime)
-
-	f, err := os.Create(fmt.Sprintf("logs/%s", fname))
-
 	if err != nil {
-		logger.Errorf("error creating log file: %v", err)
-
+		log.Default().Errorf("unable to create temp file %s", err.Error())
 		return nil
 	}
 
@@ -45,9 +43,20 @@ func CreateLogFile(context string) *os.File {
 // CreateLogger creates a file logger
 func CreateLogger(ctx string) *log.Logger {
 	f := CreateLogFile(ctx)
+
+	if f == nil {
+		return log.Default()
+	}
+
 	return log.NewWithOptions(f, log.Options{
-		Level:      log.InfoLevel,
-		Prefix:     fmt.Sprintf("[lsp|%s 🚀]", ctx),
-		TimeFormat: time.RFC3339,
+		Level:           log.DebugLevel,
+		Prefix:          "[lsp 🚀]",
+		TimeFormat:      time.RFC3339,
+		ReportTimestamp: true,
+		ReportCaller:    true,
 	})
+}
+
+func GetLogger() *log.Logger {
+	return CreateLogger("")
 }

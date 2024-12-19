@@ -2,7 +2,11 @@ package lsp
 
 type Method string
 
-const NotImplementedMethod Method = ""
+const (
+	NotImplementedMethod Method = ""
+	InitializeMethod     Method = "initialize"
+	HoverMethod          Method = "textDocument/hover"
+)
 
 func GetMethod(m string) Method {
 	methods := []Method{

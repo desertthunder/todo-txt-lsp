@@ -1,4 +1,5 @@
-// package jrpc
+// package jrpc defines methods for managing the transport layer
+// between the language server and client (editor)
 package jrpc
 
 import (
@@ -7,17 +8,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
+	"strings"
 
-	"github.com/charmbracelet/log"
 	"github.com/desertthunder/todo_txt_lsp/libs"
 )
 
 type Params struct{}
 
-var logger = libs.CreateLogger("jrpc")
-var Separator = []byte{'\r', '\n', '\r', '\n'}
-var SepNotFound = errors.New("carriage returns not found in message")
+var logger = libs.GetLogger()
 
 /*
 Message represents a JSON-RPC message as defined in the LSP spec:
@@ -29,9 +29,7 @@ Example:
 		"jsonrpc": "2.0",
 		"id": 1,
 		"method": "textDocument/completion",
-		"params": {
-			...
-		}
+		"params": { ... }
 	}
 */
 type Message struct {
@@ -43,7 +41,6 @@ type Message struct {
 
 func EncodeMessage(m interface{}) (string, error) {
 	content, err := json.Marshal(m)
-
 	if err != nil {
 		return "", err
 	}
@@ -56,78 +53,70 @@ func EncodeMessage(m interface{}) (string, error) {
 // DecodeMessage takes the input stream and decodes the message
 // by cutting the Content-Length & carriage returns, then
 // deserializing the json.
-func DecodeMessage(b []byte, logger *log.Logger) (Message, error) {
+func DecodeMessage(r *bufio.Reader, c int) (Message, error) {
 	m := Message{}
-	headers, contents, found := bytes.Cut(b, Separator)
+	payload := make([]byte, c)
 
-	if !found {
-		return m, SepNotFound
+	if _, err := io.ReadFull(r, payload); err != nil {
+		return m, fmt.Errorf("error reading payload: %v", err)
 	}
 
-	len_bytes := headers[len("Content-Length: "):]
-	c, err := strconv.Atoi(string(len_bytes))
+	logger.Debugf("full message: %s", string(payload))
 
-	if err != nil {
+	if err := json.Unmarshal(payload, &m); err != nil {
 		return m, err
 	}
 
-	if len(contents) < c {
-		err = errors.New("message too short")
-		return m, err
-	}
-
-	t := len(headers) + 4 + c // Note: the +4 is for the \r\n\r\n
-
-	logger.Debug("Message length:", t)
-
-	err = json.Unmarshal(contents[:c], &m)
-
-	if err != nil {
-		return m, err
-	}
-
-	logger.Info("Received message:", m.ID, m.Method, m.Params)
+	logger.Infof("Received message %d: %s", m.ID, m.Method)
 
 	return m, nil
 }
 
-/*
-Split is a bufio.SplitFunc that tokenizes JSON messages from the input stream.
-We take the content length and two carriage returns and return the remaining
-bytes.
+type RawMessage struct {
+	ContentLength []byte
+	Payload       []byte
+}
 
-Example: Content-Length: ...\r\n
-\r\n
+func ReadMessage(r *bufio.Reader, d string) (*RawMessage, error) {
+	var buf bytes.Buffer
 
-	{
-		"jsonrpc": "2.0",
-		"id": 1,
-		"method": "textDocument/completion",
-		"params": {
-			...
+	m := RawMessage{}
+	delim := []byte(d)
+
+	for {
+		b, err := r.ReadByte()
+
+		if err != nil {
+			return &RawMessage{}, err
+		}
+
+		buf.WriteByte(b)
+
+		if buf.Len() >= len(delim) && bytes.HasSuffix(buf.Bytes(), delim) {
+			data := buf.Bytes()[:buf.Len()-len(delim)]
+			remaining := buf.Bytes()[buf.Len()-len(delim):]
+
+			m.ContentLength = data
+			m.Payload = remaining
+
+			return &m, nil
 		}
 	}
+}
 
-```
-*/
-var Split bufio.SplitFunc = func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	headers, contents, found := bytes.Cut(data, Separator)
+func (m RawMessage) ParseContentLength() (int, error) {
+	parts := strings.SplitN(string(m.ContentLength), ":", 2)
 
-	if !found {
-		return 0, nil, SepNotFound
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid header line: %s", m.ContentLength)
 	}
 
-	content, err := strconv.Atoi(string(headers[len("Content-Length: "):]))
+	key := strings.TrimSpace(parts[0])
+	value := strings.TrimSpace(parts[1])
 
-	if err != nil {
-		return 0, nil, err
+	if key != "Content-Length" {
+		return 0, errors.New("invalid key:value pair")
 	}
 
-	if len(contents) < content {
-		return 0, nil, errors.New("message should be larger in size than the provided content length")
-	}
-
-	total := len(headers) + 4 + content // Note: the +4 is for the \r\n\r\n
-
-	return total, contents[:total], nil
+	return strconv.Atoi(value)
 }

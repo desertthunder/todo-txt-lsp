@@ -1,5 +1,7 @@
 package lsp
 
+import "encoding/json"
+
 type ClientInfo struct {
 	Name string `json:"name"`
 	// Client version
@@ -162,9 +164,76 @@ type ServerInfo struct {
 	Version string `json:"version"`
 }
 
+type Response struct {
+	JSONRPC string `json:"jsonrpc"`
+	ID      *int   `json:"id"`
+}
+
+type ServerCapabilities struct {
+	PositionEncoding                 PositionEncodingKind    `json:"positionEncoding,omitempty"`
+	TextDocumentSync                 TextDocumentSyncOptions `json:"textDocumentSync"`
+	CompletionProvider               CompletionOptions       `json:"completionProvider"`
+	SignatureHelpProvider            SignatureHelpOptions    `json:"signatureHelpProvider"`
+	DocumentFormattingProvider       bool                    `json:"documentFormattingProvider"`
+	DocumentRangeFormattingProvider  bool                    `json:"documentRangeFormattingProvider"`
+	DocumentOnTypeFormattingProvider bool                    `json:"documentOnTypeFormattingProvider"`
+	DeclarationProvider              bool                    `json:"declarationProvider"`
+	RenameProvider                   bool                    `json:"renameProvider"`
+	FoldingRangeProvider             bool                    `json:"foldingRangeProvider"`
+	InlineValueProvider              bool                    `json:"inlineValueProvider"`
+	HoverProvider                    bool                    `json:"hoverProvider"`
+}
+
 type InitializeResult struct {
 	Capabilities ServerCapabilities `json:"capabilities"`
 	ServerInfo   ServerInfo         `json:"serverInfo"`
 }
 
-const InitializeMethod Method = "initialize"
+type InitializeResponse struct {
+	Response
+	Result InitializeResult `json:"result"`
+}
+
+// HandleInitializeMessage deserializes the message with method "initialize"
+func HandleInitializeMessage(data []byte) (*InitializeParams, error) {
+	params := InitializeParams{}
+
+	if err := json.Unmarshal(data, &params); err != nil {
+		return nil, err
+	}
+
+	return &params, nil
+}
+
+// CreateInitializeResult returns a struct containing reported
+// server capabilities to the client.
+func CreateInitializeResult(id *int) InitializeResponse {
+	return InitializeResponse{
+		Response: Response{JSONRPC: "2.0", ID: id},
+		Result: InitializeResult{
+			Capabilities: ServerCapabilities{
+				HoverProvider: true,
+				CompletionProvider: CompletionOptions{
+					ResolveProvider: true,
+					TriggerCharacters: []string{
+						"(", "[", "-",
+					},
+					AllCommitCharacters: []string{
+						")", "]", "_", "x",
+					},
+					CompletionItem: CompletionItem{
+						LabelDetailsSupport: true,
+					},
+				},
+				TextDocumentSync: TextDocumentSyncOptions{
+					OpenClose: true,
+					Change:    IncrementalSync,
+				},
+			},
+			ServerInfo: ServerInfo{
+				Name:    "todo-txt-lsp",
+				Version: "0.1.0",
+			},
+		},
+	}
+}

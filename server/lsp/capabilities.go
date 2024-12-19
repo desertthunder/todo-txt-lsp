@@ -36,18 +36,3 @@ type SignatureHelpOptions struct {
 	TriggerCharacters   []string `json:"triggerCharacters"`
 	RetriggerCharacters []string `json:"retriggerCharacters"`
 }
-
-type ServerCapabilities struct {
-	PositionEncoding                 PositionEncodingKind    `json:"positionEncoding"`
-	TextDocumentSync                 TextDocumentSyncOptions `json:"textDocumentSync"`
-	CompletionProvider               CompletionOptions       `json:"completionProvider"`
-	SignatureHelpProvider            SignatureHelpOptions    `json:"signatureHelpProvider"`
-	DocumentFormattingProvider       bool                    `json:"documentFormattingProvider"`
-	DocumentRangeFormattingProvider  bool                    `json:"documentRangeFormattingProvider"`
-	DocumentOnTypeFormattingProvider bool                    `json:"documentOnTypeFormattingProvider"`
-	DeclarationProvider              bool                    `json:"declarationProvider"`
-	RenameProvider                   bool                    `json:"renameProvider"`
-	FoldingRangeProvider             bool                    `json:"foldingRangeProvider"`
-	InlineValueProvider              bool                    `json:"inlineValueProvider"`
-	HoverProvider                    bool                    `json:"hoverProvider"`
-}
