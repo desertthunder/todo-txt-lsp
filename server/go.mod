@@ -1,6 +1,6 @@
 module github.com/desertthunder/todo_txt_lsp
 
-go 1.22.4
+go 1.23.3
 
 require github.com/charmbracelet/log v0.4.0
 
